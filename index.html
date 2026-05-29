@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>zysooBlogs - 个人博客</title>
+    <meta name="description" content="zysooBlogs 是一个纯前端个人博客系统，支持 Markdown 写作、深色模式、全文搜索。">
+    <meta property="og:title" content="zysooBlogs">
+    <meta property="og:description" content="个人博客系统，纯前端实现">
+    <meta property="og:type" content="website">
+    <meta name="theme-color" content="#faf8f5" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#171411" media="(prefers-color-scheme: dark)">
+    <link rel="manifest" href="manifest.json">
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- EasyMDE 样式 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde@2.18.0/dist/easymde.min.css">
+    <!-- highlight.js 语法高亮 -->
+    <link rel="stylesheet" id="hljs-light" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css" media="(prefers-color-scheme: light)">
+    <link rel="stylesheet" id="hljs-dark" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" media="(prefers-color-scheme: dark)">
+    <!-- 自定义样式 -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/easy-mde-override.css">
+</head>
+<body>
+    <div id="app" class="container"></div>
+    <!-- 阅读进度条 -->
+    <div id="readingProgress" class="reading-progress"></div>
+    <!-- 回到顶部 -->
+    <button id="backToTop" class="back-to-top" title="回到顶部"><i class="fas fa-arrow-up"></i></button>
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>

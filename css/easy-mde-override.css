@@ -1,0 +1,16 @@
+/* 让编辑器在深色模式下适配 */
+[data-theme="dark"] .EasyMDEContainer .CodeMirror,
+[data-theme="dark"] .editor-toolbar,
+[data-theme="dark"] .editor-preview {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+[data-theme="dark"] .editor-toolbar button {
+    color: var(--text-primary);
+}
+[data-theme="dark"] .editor-toolbar button.active,
+[data-theme="dark"] .editor-toolbar button:hover {
+    background: var(--accent-color);
+    color: white;
+}
