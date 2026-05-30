@@ -1,4 +1,5 @@
 import { db } from './db.js';
+// 版本 2 - 修复导出问题
 
 const AUTH_KEY = 'zysooBlogs_auth';
 const EXPIRE_KEY = 'zysooBlogs_auth_expire';
@@ -74,16 +75,25 @@ export async function isFirstVisit() {
     return !setting;
 }
 
+export async function hashPassword(password) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(password);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    return hashHex;
+}
+
 export async function setNewPassword(password) {
-    const hashed = btoa(password);
+    const hashed = await hashPassword(password);
     await db.settings.put({ key: 'adminPassword', value: hashed });
-    persistAuth();
 }
 
 export async function verifyPassword(password) {
     const record = await db.settings.get('adminPassword');
     if (!record) return false;
-    return btoa(password) === record.value;
+    const hashedInput = await hashPassword(password);
+    return hashedInput === record.value;
 }
 
 function persistAuth() {
@@ -116,7 +126,7 @@ function logoutSilent() {
 export function showSetupPasswordModal(onDone) {
     showModal({
         icon: '🔐',
-        title: '欢迎使用 zyeoBlog',
+        title: '欢迎使用 zysooBlogs',
         desc: '请设置管理密码，用于管理文章和仪表盘。<br><small style="opacity:0.6;">密码将加密存储在浏览器中，7 天内无需重复登录。</small>',
         input: '设置管理密码',
         btnText: '确认设置',

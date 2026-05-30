@@ -1,18 +1,35 @@
 import { initRouter } from './router.js';
 import { initSampleData, db } from './db.js';
-import { isFirstVisit, setNewPassword, showLoginModal } from './auth.js';
+import { isFirstVisit, showLoginModal } from './auth.js';
 import { SITE_CONFIG } from './config.js';
+
+function updateCodeHighlightTheme(theme) {
+    const lightStyle = document.getElementById('hljs-light');
+    const darkStyle = document.getElementById('hljs-dark');
+    
+    if (lightStyle && darkStyle) {
+        if (theme === 'dark') {
+            lightStyle.media = 'none';
+            darkStyle.media = 'all';
+        } else {
+            lightStyle.media = 'all';
+            darkStyle.media = 'none';
+        }
+    }
+}
 
 function initTheme() {
     const storedTheme = localStorage.getItem('theme');
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     const theme = storedTheme || (prefersDark ? 'dark' : 'light');
     document.documentElement.setAttribute('data-theme', theme);
+    updateCodeHighlightTheme(theme);
     
     window.updateThemeToggle = () => {
         const btn = document.getElementById('themeToggleBtn');
+        const currentTheme = document.documentElement.getAttribute('data-theme');
         if (btn) {
-            btn.innerHTML = theme === 'dark'
+            btn.innerHTML = currentTheme === 'dark'
                 ? '<i class="fas fa-sun"></i>'
                 : '<i class="fas fa-moon"></i>';
         }
@@ -21,6 +38,7 @@ function initTheme() {
         const newTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
         document.documentElement.setAttribute('data-theme', newTheme);
         localStorage.setItem('theme', newTheme);
+        updateCodeHighlightTheme(newTheme);
         window.updateThemeToggle();
     };
     window.updateThemeToggle();

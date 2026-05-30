@@ -1,9 +1,11 @@
 import { postStore } from '../db.js';
-import { slugify, escapeHtml } from '../utils.js';
+import { slugify, escapeHtml, debounce } from '../utils.js';
 import { navigateTo } from '../router.js';
 import { renderNavbar } from '../app.js';
 
 let easyMDE = null;
+let autoSaveTimer = null;
+let currentDraftKey = null;
 
 export async function renderPostEditor(container, params) {
     const postId = params.id ? parseInt(params.id) : null;
@@ -35,12 +37,60 @@ export async function renderPostEditor(container, params) {
     `;
     container.innerHTML = renderNavbar() + `<div id="pageContent">${editorHtml}</div>`;
     
+    currentDraftKey = postId ? `editor_draft_${postId}` : 'editor_draft_new';
+    
+    // 尝试加载草稿
+    const savedDraft = localStorage.getItem(currentDraftKey);
+    if (savedDraft && !postId) {
+        try {
+            const draft = JSON.parse(savedDraft);
+            post = draft;
+        } catch (e) {
+            console.warn('Failed to load draft:', e);
+        }
+    }
+    
+    // 更新表单值
+    if (savedDraft && !postId) {
+        document.getElementById('titleInput').value = post.title || '';
+        document.getElementById('tagsInput').value = (post.tags || []).join(',');
+        document.getElementById('coverInput').value = post.coverImage || '';
+        document.getElementById('statusSelect').value = post.status || 'draft';
+    }
+    
     if (typeof EasyMDE !== 'undefined') {
-        easyMDE = new EasyMDE({ element: document.getElementById('markdownEditor'), spellChecker: false });
+        easyMDE = new EasyMDE({ element: document.getElementById('markdownEditor'), spellChecker: false, initialValue: post.content });
     } else {
         await import('https://cdn.jsdelivr.net/npm/easymde@2.18.0/dist/easymde.min.js');
-        easyMDE = new EasyMDE({ element: document.getElementById('markdownEditor'), spellChecker: false });
+        easyMDE = new EasyMDE({ element: document.getElementById('markdownEditor'), spellChecker: false, initialValue: post.content });
     }
+    
+    // 自动保存功能
+    const saveDraft = debounce(() => {
+        const draft = {
+            title: document.getElementById('titleInput').value,
+            content: easyMDE.value(),
+            tags: document.getElementById('tagsInput').value.split(',').map(s => s.trim()).filter(Boolean),
+            coverImage: document.getElementById('coverInput').value,
+            status: document.getElementById('statusSelect').value
+        };
+        localStorage.setItem(currentDraftKey, JSON.stringify(draft));
+    }, 2000);
+    
+    // 安全地添加事件监听器 - 处理不同的 EasyMDE 版本
+    if (easyMDE.codemirror && typeof easyMDE.codemirror.on === 'function') {
+        easyMDE.codemirror.on('change', saveDraft);
+    } else {
+        // 备选方案：直接监听 textarea 的变化
+        const textarea = document.getElementById('markdownEditor');
+        if (textarea) {
+            textarea.addEventListener('input', saveDraft);
+        }
+    }
+    document.getElementById('titleInput').addEventListener('input', saveDraft);
+    document.getElementById('tagsInput').addEventListener('input', saveDraft);
+    document.getElementById('coverInput').addEventListener('input', saveDraft);
+    document.getElementById('statusSelect').addEventListener('change', saveDraft);
     
     document.getElementById('savePostBtn').onclick = async () => {
         const title = document.getElementById('titleInput').value.trim();
@@ -57,6 +107,8 @@ export async function renderPostEditor(container, params) {
             };
             console.log('保存文章:', updatedPost.title, 'id:', updatedPost.id, 'status:', updatedPost.status);
             await postStore.save(updatedPost);
+            // 清除自动保存的草稿
+            localStorage.removeItem(currentDraftKey);
             alert('保存成功！');
             navigateTo('/manage');
         } catch (err) {
@@ -76,21 +128,35 @@ export async function renderPostEditor(container, params) {
         reader.onload = (ev) => {
             const dataUrl = ev.target.result;
             document.getElementById('coverInput').value = dataUrl;
-            const preview = document.getElementById('coverPreviewImg');
-            if (preview) { preview.style.display = 'block'; preview.outerHTML = `<img src="${dataUrl}" class="cover-preview" id="coverPreviewImg">`; }
+            updateCoverPreview(dataUrl);
         };
         reader.readAsDataURL(file);
     });
     // URL 变化时更新预览
     document.getElementById('coverInput').addEventListener('input', (e) => {
         const url = e.target.value.trim();
-        const preview = document.getElementById('coverPreviewImg');
-        if (url && url.startsWith('http') || url.startsWith('data:')) {
-            if (preview) { preview.style.display = 'block'; preview.outerHTML = `<img src="${url}" class="cover-preview" id="coverPreviewImg">`; }
-        } else if (preview) {
-            preview.style.display = 'none';
-        }
+        updateCoverPreview(url);
     });
+    
+    // 更新封面预览的函数
+    function updateCoverPreview(url) {
+        const previewContainer = document.getElementById('coverUpload');
+        const existingPreview = document.getElementById('coverPreviewImg');
+        
+        // 移除现有的预览
+        if (existingPreview) {
+            existingPreview.remove();
+        }
+        
+        // 添加新的预览
+        if (url && (url.startsWith('http') || url.startsWith('data:'))) {
+            const newPreview = document.createElement('img');
+            newPreview.src = url;
+            newPreview.className = 'cover-preview';
+            newPreview.id = 'coverPreviewImg';
+            previewContainer.insertBefore(newPreview, previewContainer.firstChild);
+        }
+    }
 
     // 预览
     document.getElementById('previewBtn').addEventListener('click', async () => {

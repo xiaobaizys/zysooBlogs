@@ -65,11 +65,28 @@ export const postStore = {
     
     search: async (keyword) => {
         const all = await db.posts.where('status').equals('published').toArray();
-        const lowerKeyword = keyword.toLowerCase();
-        return all.filter(p => 
-            p.title.toLowerCase().includes(lowerKeyword) || 
-            p.content.toLowerCase().includes(lowerKeyword)
-        );
+        const lowerKeyword = keyword.toLowerCase().trim();
+        
+        if (!lowerKeyword) return [];
+        
+        // 简单的搜索优化：先搜索标题，再搜索内容，按相关度排序
+        const results = [];
+        for (const p of all) {
+            const titleMatch = p.title.toLowerCase().includes(lowerKeyword);
+            const contentMatch = p.content.toLowerCase().includes(lowerKeyword);
+            
+            if (titleMatch || contentMatch) {
+                let score = 0;
+                if (titleMatch) score += 10;  // 标题匹配权重更高
+                if (contentMatch) score += 1;
+                results.push({ ...p, _score: score });
+            }
+        }
+        
+        return results.sort((a, b) => b._score - a._score).map(p => {
+            delete p._score;
+            return p;
+        });
     }
 };
 
@@ -86,6 +103,9 @@ export const commentStore = {
     },
     count: async (postSlug) => {
         return await db.comments.where('postSlug').equals(postSlug).count();
+    },
+    getAll: async () => {
+        return await db.comments.toArray();
     }
 };
 

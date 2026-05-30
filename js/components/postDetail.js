@@ -26,7 +26,7 @@ export async function renderPostDetail(container, params) {
     }
 
     // 更新页面 SEO
-    document.title = post.title + ' - zyeoBlog';
+    document.title = post.title + ' - zysooBlogs';
     const descMeta = document.querySelector('meta[name="description"]');
     if (descMeta) descMeta.content = post.content.substring(0, 160).replace(/\n/g, ' ');
 

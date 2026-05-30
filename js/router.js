@@ -17,6 +17,7 @@ const routes = [
     { path: '/manage', component: renderManage, requireAuth: true },
     { path: '/dashboard', component: renderDashboard, requireAuth: true },
     { path: '/tags', component: renderTags },
+    { path: '/tag/:tag', component: renderHome },
     { path: '/search', component: renderSearch },
     { path: '/about', component: renderAbout },
     { path: '/rss', component: renderRSS }

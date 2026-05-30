@@ -54,8 +54,9 @@ export async function renderDashboard(container) {
     const totalViews = getTotalViews();
     const tags = await postStore.getAllTags();
 
-    let totalComments = 0;
-    for (const p of published) totalComments += await commentStore.count(p.slug);
+    // 一次性获取所有评论，统计效率更高
+    const allComments = await commentStore.getAll();
+    let totalComments = allComments.length;
 
     const stats = [allPosts.length, published.length, drafts.length, totalViews, totalComments];
     const STAT_ICONS = ['📄', '📤', '📥', '👁️', '💬'];

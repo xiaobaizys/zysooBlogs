@@ -7,7 +7,7 @@ let currentPage = 1;
 let currentTag = null;
 
 export async function renderHome(container, params = {}) {
-    currentTag = params.tag || null;
+    currentTag = params.tag ? decodeURIComponent(params.tag) : null;
     currentPage = 1;
     await renderPage(container);
 }
